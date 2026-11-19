@@ -1,0 +1,1 @@
+"""SpendWise FastAPI application package."""
