@@ -46,11 +46,20 @@ Tests use a disposable Postgres database (`spendwise_test`) on the same Docker P
 pytest
 ```
 
-## Stage 1 endpoints
+## Endpoints (Stage 1–2)
 
 | Method | Path | Auth |
 |--------|------|------|
 | GET | `/health/live` | No |
 | GET | `/health/ready` | No |
-| GET | `/api/v1/me` | Bearer JWT |
-| PATCH | `/api/v1/me` | Bearer JWT |
+| GET/PATCH | `/api/v1/me` | Bearer JWT |
+| GET/POST | `/api/v1/categories` | Bearer JWT |
+| PATCH | `/api/v1/categories/{id}` | Bearer JWT |
+| GET/POST | `/api/v1/transactions` | Bearer JWT |
+| GET/PATCH/DELETE | `/api/v1/transactions/{id}` | Bearer JWT |
+| GET | `/api/v1/budgets` | Bearer JWT |
+| PUT | `/api/v1/budgets/{year}/{month}` | Bearer JWT |
+| GET | `/api/v1/analytics/summary` | Bearer JWT |
+| GET | `/api/v1/analytics/categories` | Bearer JWT |
+
+OpenAPI: http://localhost:8000/docs

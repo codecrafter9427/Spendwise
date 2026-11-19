@@ -31,7 +31,8 @@ from app.core.config import get_settings  # noqa: E402
 from app.db.base import Base  # noqa: E402
 from app.db.session import get_db_session  # noqa: E402
 from app.main import create_app  # noqa: E402
-from app.models import AppUser  # noqa: E402, F401
+from app.models import AppUser, Category, MonthlyBudget, Transaction  # noqa: E402, F401
+from app.services.seed import ensure_default_categories  # noqa: E402
 
 ADMIN_URL = "postgresql+asyncpg://spendwise:spendwise@localhost:5432/postgres"
 TEST_DB_URL = os.environ["DATABASE_URL"]
@@ -67,6 +68,9 @@ async def engine() -> AsyncIterator[AsyncEngine]:
     async with eng.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
+    async with async_sessionmaker(bind=eng, class_=AsyncSession, expire_on_commit=False)() as session:
+        await ensure_default_categories(session)
+        await session.commit()
     yield eng
     async with eng.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
