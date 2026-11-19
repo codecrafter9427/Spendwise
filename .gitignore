@@ -30,3 +30,10 @@ backend/*.egg-info/
 backend/dist/
 backend/build/
 
+# Web
+web/node_modules/
+web/.next/
+web/out/
+web/.env
+web/.env*.local
+
