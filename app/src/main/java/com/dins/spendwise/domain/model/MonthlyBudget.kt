@@ -6,5 +6,7 @@ data class MonthlyBudget(
     val month: Int,
     val amountMinor: Long,
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val remoteId: String? = null,
+    val serverVersion: Int = 1
 )

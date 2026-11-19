@@ -10,7 +10,9 @@ data class Transaction(
     val description: String?,
     val transactionDate: LocalDate,
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val remoteId: String? = null,
+    val serverVersion: Int = 1
 )
 
 data class TransactionWithCategory(

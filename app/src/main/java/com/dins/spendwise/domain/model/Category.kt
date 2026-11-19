@@ -5,5 +5,6 @@ data class Category(
     val name: String,
     val type: TransactionType,
     val icon: String,
-    val isDefault: Boolean
+    val isDefault: Boolean,
+    val remoteId: String? = null
 )

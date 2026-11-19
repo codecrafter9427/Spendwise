@@ -1,0 +1,10 @@
+## Copy values into local.properties (gitignored). Do not commit secrets.
+
+sdk.dir=C\:\\Users\\YOU\\AppData\\Local\\Android\\Sdk
+
+# Emulator → host machine. Use your LAN IP for a physical device.
+spendwise.api.baseUrl=http://10.0.2.2:8000
+
+# Same Supabase project as web/backend
+spendwise.supabase.url=https://YOUR_PROJECT_REF.supabase.co
+spendwise.supabase.anonKey=sb_publishable_OR_eyJ_anon_key

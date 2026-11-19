@@ -62,11 +62,23 @@ Instrumented DAO tests (device/emulator required):
 - [x] Room offline persistence; money as Long paise; LocalDate as epoch day
 - [x] Unit tests for core calculations/validation; DAO instrumented tests
 
+## Cloud / Stage 4 (optional)
+
+Backend + web can run alongside the Android app. For Android account linking, add to `local.properties`:
+
+```properties
+spendwise.api.baseUrl=http://10.0.2.2:8000
+spendwise.supabase.url=https://YOUR_PROJECT_REF.supabase.co
+spendwise.supabase.anonKey=YOUR_PUBLISHABLE_OR_ANON_KEY
+```
+
+Then use **Settings → Account** to sign in and upload local data. See `docs/STAGE4_ANDROID_INTEGRATION.md`.
+
 ## Known limitations
 
-- No custom categories, cloud sync, login, bank/UPI/SMS import, or multi-currency conversion
+- Full offline outbox sync / realtime / AI are later stages
+- No custom categories UI, bank/UPI/SMS import, or multi-currency conversion
 - INR display only
-- Room uses destructive migration for this pre-release schema (replace with real migrations before Play production updates)
 - No biometric lock, CSV export, or recurring transactions
 
 ## Signed release AAB

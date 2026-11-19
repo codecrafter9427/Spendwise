@@ -6,12 +6,16 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "categories",
-    indices = [Index(value = ["type"])]
+    indices = [
+        Index(value = ["type"]),
+        Index(value = ["remoteId"], unique = true)
+    ]
 )
 data class CategoryEntity(
     @PrimaryKey val id: Long,
     val name: String,
     val type: String,
     val icon: String,
-    val isDefault: Boolean
+    val isDefault: Boolean,
+    val remoteId: String? = null
 )

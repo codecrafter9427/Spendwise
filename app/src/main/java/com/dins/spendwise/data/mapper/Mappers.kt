@@ -16,7 +16,8 @@ fun CategoryEntity.toDomain(): Category = Category(
     name = name,
     type = TransactionType.valueOf(type),
     icon = icon,
-    isDefault = isDefault
+    isDefault = isDefault,
+    remoteId = remoteId
 )
 
 fun TransactionEntity.toDomain(): Transaction = Transaction(
@@ -27,7 +28,9 @@ fun TransactionEntity.toDomain(): Transaction = Transaction(
     description = description,
     transactionDate = LocalDate.ofEpochDay(transactionDate),
     createdAt = createdAt,
-    updatedAt = updatedAt
+    updatedAt = updatedAt,
+    remoteId = remoteId,
+    serverVersion = serverVersion
 )
 
 fun Transaction.toEntity(): TransactionEntity = TransactionEntity(
@@ -38,7 +41,9 @@ fun Transaction.toEntity(): TransactionEntity = TransactionEntity(
     description = description,
     transactionDate = transactionDate.toEpochDay(),
     createdAt = createdAt,
-    updatedAt = updatedAt
+    updatedAt = updatedAt,
+    remoteId = remoteId,
+    serverVersion = serverVersion
 )
 
 fun TransactionWithCategoryEntity.toDomain(): TransactionWithCategory =
@@ -53,7 +58,9 @@ fun MonthlyBudgetEntity.toDomain(): MonthlyBudget = MonthlyBudget(
     month = month,
     amountMinor = amountMinor,
     createdAt = createdAt,
-    updatedAt = updatedAt
+    updatedAt = updatedAt,
+    remoteId = remoteId,
+    serverVersion = serverVersion
 )
 
 fun MonthlyBudget.toEntity(): MonthlyBudgetEntity = MonthlyBudgetEntity(
@@ -62,5 +69,7 @@ fun MonthlyBudget.toEntity(): MonthlyBudgetEntity = MonthlyBudgetEntity(
     month = month,
     amountMinor = amountMinor,
     createdAt = createdAt,
-    updatedAt = updatedAt
+    updatedAt = updatedAt,
+    remoteId = remoteId,
+    serverVersion = serverVersion
 )

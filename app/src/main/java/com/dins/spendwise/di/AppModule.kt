@@ -8,6 +8,7 @@ import androidx.room.Room
 import com.dins.spendwise.data.local.dao.CategoryDao
 import com.dins.spendwise.data.local.dao.MonthlyBudgetDao
 import com.dins.spendwise.data.local.dao.TransactionDao
+import com.dins.spendwise.data.local.database.Migrations
 import com.dins.spendwise.data.local.database.SpendWiseDatabase
 import com.dins.spendwise.data.repository.BudgetRepositoryImpl
 import com.dins.spendwise.data.repository.CategoryRepositoryImpl
@@ -51,6 +52,7 @@ object DatabaseModule {
             SpendWiseDatabase::class.java,
             SpendWiseDatabase.NAME
         )
+            .addMigrations(Migrations.MIGRATION_1_2)
             .fallbackToDestructiveMigration(dropAllTables = true)
             .addCallback(SpendWiseDatabase.createCallback(scope) { database })
             .build()

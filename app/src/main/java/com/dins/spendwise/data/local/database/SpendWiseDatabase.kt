@@ -3,12 +3,14 @@ package com.dins.spendwise.data.local.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.dins.spendwise.core.utils.DefaultCategoryRemoteIds
 import com.dins.spendwise.data.local.dao.CategoryDao
 import com.dins.spendwise.data.local.dao.MonthlyBudgetDao
 import com.dins.spendwise.data.local.dao.TransactionDao
 import com.dins.spendwise.data.local.entity.CategoryEntity
 import com.dins.spendwise.data.local.entity.MonthlyBudgetEntity
 import com.dins.spendwise.data.local.entity.TransactionEntity
+import com.dins.spendwise.domain.model.TransactionType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -19,7 +21,7 @@ import kotlinx.coroutines.launch
         TransactionEntity::class,
         MonthlyBudgetEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class SpendWiseDatabase : RoomDatabase() {
@@ -45,9 +47,25 @@ abstract class SpendWiseDatabase : RoomDatabase() {
                         val dao = databaseProvider().categoryDao()
                         if (dao.count() == 0) {
                             dao.insertAll(CategorySeeder.defaultCategories())
+                        } else {
+                            backfillCategoryRemoteIds(dao)
                         }
                     }
                 }
             }
+
+        private suspend fun backfillCategoryRemoteIds(dao: CategoryDao) {
+            dao.observeAllOnce().forEach { category ->
+                if (category.remoteId.isNullOrBlank()) {
+                    val type = runCatching { TransactionType.valueOf(category.type) }.getOrNull()
+                        ?: return@forEach
+                    dao.update(
+                        category.copy(
+                            remoteId = DefaultCategoryRemoteIds.remoteId(type, category.name)
+                        )
+                    )
+                }
+            }
+        }
     }
 }

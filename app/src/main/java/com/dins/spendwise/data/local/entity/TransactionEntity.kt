@@ -19,7 +19,8 @@ import androidx.room.PrimaryKey
         Index(value = ["transactionDate"]),
         Index(value = ["categoryId"]),
         Index(value = ["type"]),
-        Index(value = ["transactionDate", "type"])
+        Index(value = ["transactionDate", "type"]),
+        Index(value = ["remoteId"], unique = true)
     ]
 )
 data class TransactionEntity(
@@ -30,5 +31,7 @@ data class TransactionEntity(
     val description: String?,
     val transactionDate: Long,
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val remoteId: String? = null,
+    val serverVersion: Int = 1
 )

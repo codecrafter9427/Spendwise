@@ -6,7 +6,10 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "monthly_budgets",
-    indices = [Index(value = ["year", "month"], unique = true)]
+    indices = [
+        Index(value = ["year", "month"], unique = true),
+        Index(value = ["remoteId"], unique = true)
+    ]
 )
 data class MonthlyBudgetEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
@@ -14,5 +17,7 @@ data class MonthlyBudgetEntity(
     val month: Int,
     val amountMinor: Long,
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val remoteId: String? = null,
+    val serverVersion: Int = 1
 )

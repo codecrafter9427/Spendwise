@@ -1,9 +1,21 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
 }
+
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use { load(it) }
+    }
+}
+
+fun localProp(key: String, default: String): String =
+    (localProperties.getProperty(key) ?: default).replace("\\", "\\\\").replace("\"", "\\\"")
 
 android {
     namespace = "com.dins.spendwise"
@@ -19,6 +31,23 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Emulator → host machine loopback. Override in local.properties for device.
+        buildConfigField(
+            "String",
+            "API_BASE_URL",
+            "\"${localProp("spendwise.api.baseUrl", "http://10.0.2.2:8000")}\""
+        )
+        buildConfigField(
+            "String",
+            "SUPABASE_URL",
+            "\"${localProp("spendwise.supabase.url", "")}\""
+        )
+        buildConfigField(
+            "String",
+            "SUPABASE_ANON_KEY",
+            "\"${localProp("spendwise.supabase.anonKey", "")}\""
+        )
     }
 
     buildTypes {
@@ -67,6 +96,12 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.moshi)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
+    implementation(libs.moshi)
+    implementation(libs.moshi.kotlin)
 
     ksp(libs.androidx.room.compiler)
     ksp(libs.hilt.android.compiler)
