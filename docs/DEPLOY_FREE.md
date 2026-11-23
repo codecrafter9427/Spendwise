@@ -4,15 +4,15 @@ Branch: `cursor/stage-8-hardening`
 
 ## 1. Supabase Postgres URL
 
-Project Settings → Database → URI.
+In the project dashboard click **Connect** (top bar) → **Session pooler** → copy URI.
 
-Transform to asyncpg + SSL:
+Prefer this form (asyncpg + SSL). Plain `postgresql://` is also accepted — the API rewrites it to asyncpg:
 
 ```text
 postgresql+asyncpg://USER:PASSWORD@HOST:5432/postgres?ssl=require
 ```
 
-URL-encode special characters in the password.
+URL-encode special characters in the password. For Supabase hosts, include `ssl=require`.
 
 Also keep:
 

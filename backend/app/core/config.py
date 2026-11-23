@@ -47,6 +47,26 @@ class Settings(BaseSettings):
     rate_limit_ai_per_window: int = Field(default=20, alias="RATE_LIMIT_AI_PER_WINDOW")
     rate_limit_enabled: bool = Field(default=True, alias="RATE_LIMIT_ENABLED")
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def normalize_database_url(cls, value: object) -> object:
+        """Accept plain postgres URLs from Supabase Connect; force asyncpg."""
+        if not isinstance(value, str) or not value:
+            return value
+        url = value.strip()
+        for prefix in (
+            "postgresql+psycopg2://",
+            "postgresql+psycopg://",
+            "postgres+psycopg2://",
+            "postgres+psycopg://",
+            "postgresql://",
+            "postgres://",
+        ):
+            if url.startswith(prefix):
+                url = "postgresql+asyncpg://" + url[len(prefix) :]
+                break
+        return url
+
     @field_validator("cors_origins_raw", mode="before")
     @classmethod
     def coerce_cors_origins_raw(cls, value: object) -> str:
