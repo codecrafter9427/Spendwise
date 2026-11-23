@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { AnalyticsSummary, Transaction } from "@/lib/types";
 import { ApiError } from "@/lib/types";
 import { monthBounds } from "@/lib/dates";
+import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
 
 export default function DashboardPage() {
   const [ym, setYm] = useState<YearMonth>(currentYearMonth);
@@ -56,6 +57,10 @@ export default function DashboardPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useRealtimeRefresh(() => {
+    void load();
+  });
 
   async function saveBudget(event: FormEvent) {
     event.preventDefault();

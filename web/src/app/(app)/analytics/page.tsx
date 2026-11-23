@@ -10,6 +10,7 @@ import { formatInr } from "@/lib/money";
 import { createClient } from "@/lib/supabase/client";
 import type { AnalyticsSummary, CategorySpendResponse } from "@/lib/types";
 import { ApiError } from "@/lib/types";
+import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
 
 export default function AnalyticsPage() {
   const [ym, setYm] = useState<YearMonth>(currentYearMonth);
@@ -42,6 +43,10 @@ export default function AnalyticsPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useRealtimeRefresh(() => {
+    void load();
+  });
 
   return (
     <div className="stack">

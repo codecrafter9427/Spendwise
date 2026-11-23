@@ -50,6 +50,17 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @Named("realtime")
+    fun provideRealtimeOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient =
+        OkHttpClient.Builder()
+            .connectTimeout(20, TimeUnit.SECONDS)
+            .readTimeout(0, TimeUnit.MILLISECONDS)
+            .writeTimeout(20, TimeUnit.SECONDS)
+            .addInterceptor(authInterceptor)
+            .build()
+
+    @Provides
+    @Singleton
     @Named("spendwise")
     fun provideSpendWiseRetrofit(client: OkHttpClient, moshi: Moshi): Retrofit {
         val base = BuildConfig.API_BASE_URL.trimEnd('/') + "/"

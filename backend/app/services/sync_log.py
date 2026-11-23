@@ -6,6 +6,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.sync import SyncChange
+from app.services.realtime import RealtimeEvent, realtime_hub
 
 
 class SyncLogService:
@@ -32,4 +33,15 @@ class SyncLogService:
         )
         self._session.add(change)
         await self._session.flush()
+        await realtime_hub.publish(
+            user_id,
+            RealtimeEvent(
+                type="sync",
+                entity_type=entity_type,
+                entity_id=str(entity_id),
+                operation=operation,
+                version=version,
+                cursor=str(change.sequence),
+            ),
+        )
         return change

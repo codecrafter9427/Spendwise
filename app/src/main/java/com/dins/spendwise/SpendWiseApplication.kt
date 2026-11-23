@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.dins.spendwise.data.remote.AuthRepository
+import com.dins.spendwise.data.sync.RealtimeLifecycle
 import com.dins.spendwise.data.sync.SyncScheduler
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -17,6 +18,7 @@ class SpendWiseApplication : Application(), Configuration.Provider {
     @Inject lateinit var workerFactory: HiltWorkerFactory
     @Inject lateinit var authRepository: AuthRepository
     @Inject lateinit var syncScheduler: SyncScheduler
+    @Inject lateinit var realtimeLifecycle: RealtimeLifecycle
     @Inject lateinit var applicationScope: CoroutineScope
 
     override val workManagerConfiguration: Configuration
@@ -26,6 +28,7 @@ class SpendWiseApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        realtimeLifecycle.register()
         applicationScope.launch {
             authRepository.sessionFlow.collectLatest { session ->
                 if (session != null) {

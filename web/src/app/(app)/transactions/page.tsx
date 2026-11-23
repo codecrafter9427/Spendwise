@@ -10,6 +10,7 @@ import { formatInr, parseRupeesToMinor } from "@/lib/money";
 import { createClient } from "@/lib/supabase/client";
 import type { Category, Transaction, TransactionType } from "@/lib/types";
 import { ApiError } from "@/lib/types";
+import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
 
 export default function TransactionsPage() {
   const [ym, setYm] = useState<YearMonth>(currentYearMonth);
@@ -63,6 +64,10 @@ export default function TransactionsPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useRealtimeRefresh(() => {
+    void load();
+  });
 
   useEffect(() => {
     const first = filteredCategories[0];
