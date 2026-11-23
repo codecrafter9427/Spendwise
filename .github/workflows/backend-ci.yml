@@ -1,0 +1,47 @@
+name: backend-ci
+
+on:
+  push:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: spendwise
+          POSTGRES_PASSWORD: spendwise
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U spendwise -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      APP_ENV: test
+      JWT_TEST_SECRET: spendwise-test-secret-do-not-use-in-prod
+      SUPABASE_JWT_ISSUER: https://test.supabase.co/auth/v1
+      SUPABASE_JWT_AUDIENCE: authenticated
+      DATABASE_URL: postgresql+asyncpg://spendwise:spendwise@localhost:5432/spendwise_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Test
+        run: pytest -q

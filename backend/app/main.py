@@ -7,6 +7,12 @@ from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging
+from app.core.middleware import (
+    BodySizeLimitMiddleware,
+    RateLimitMiddleware,
+    RequestContextMiddleware,
+    SecurityHeadersMiddleware,
+)
 from app.db.session import dispose_engine, init_engine
 
 
@@ -26,6 +32,11 @@ def create_app() -> FastAPI:
         version="0.1.0",
         lifespan=lifespan,
     )
+    # Starlette runs middleware in reverse add order for requests.
+    app.add_middleware(RequestContextMiddleware)
+    app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(BodySizeLimitMiddleware, max_body_bytes=settings.max_request_body_bytes)
+    app.add_middleware(RateLimitMiddleware, settings=settings)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,

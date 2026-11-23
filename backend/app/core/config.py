@@ -40,6 +40,13 @@ class Settings(BaseSettings):
     )
     ai_model: str = Field(default="gpt-4o-mini", alias="AI_MODEL")
 
+    # Stage 8 hardening
+    max_request_body_bytes: int = Field(default=1_048_576, alias="MAX_REQUEST_BODY_BYTES")
+    rate_limit_window_seconds: int = Field(default=60, alias="RATE_LIMIT_WINDOW_SECONDS")
+    rate_limit_write_per_window: int = Field(default=120, alias="RATE_LIMIT_WRITE_PER_WINDOW")
+    rate_limit_ai_per_window: int = Field(default=20, alias="RATE_LIMIT_AI_PER_WINDOW")
+    rate_limit_enabled: bool = Field(default=True, alias="RATE_LIMIT_ENABLED")
+
     @field_validator("cors_origins_raw", mode="before")
     @classmethod
     def coerce_cors_origins_raw(cls, value: object) -> str:

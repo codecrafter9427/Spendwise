@@ -162,6 +162,15 @@ export const api = {
       query: { year, month },
     }),
 
+  exportAccount: (token: string) =>
+    apiRequest<Record<string, unknown>>("/api/v1/account/export", { token }),
+
+  deleteAccount: (token: string) =>
+    apiRequest<{ status: string; deleted: Record<string, number> }>("/api/v1/account", {
+      method: "DELETE",
+      token,
+    }),
+
   analyticsCategories: (token: string, year: number, month: number) =>
     apiRequest<CategorySpendResponse>("/api/v1/analytics/categories", {
       token,
