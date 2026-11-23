@@ -1,0 +1,34 @@
+# Free-tier friendly Render Blueprint for SpendWise API.
+# Dashboard: New → Blueprint → connect this repo → select branch cursor/stage-8-hardening
+# Set secret env vars in the dashboard after create (DATABASE_URL, Supabase keys).
+
+services:
+  - type: web
+    name: spendwise-api
+    runtime: docker
+    plan: free
+    branch: cursor/stage-8-hardening
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health/live
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: SUPABASE_JWT_AUDIENCE
+        value: authenticated
+      - key: AI_FEATURE_ENABLED
+        value: "true"
+      - key: RATE_LIMIT_ENABLED
+        value: "true"
+      - key: CORS_ORIGINS
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_JWKS_URL
+        sync: false
+      - key: SUPABASE_JWT_ISSUER
+        sync: false
