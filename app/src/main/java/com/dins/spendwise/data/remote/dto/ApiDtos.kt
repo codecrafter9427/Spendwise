@@ -59,6 +59,12 @@ data class TransactionDto(
     @Json(name = "deleted_at") val deletedAt: String?
 )
 
+data class TransactionPageDto(
+    val items: List<TransactionDto>,
+    @Json(name = "next_cursor") val nextCursor: String?,
+    val limit: Int
+)
+
 data class BudgetUpsertDto(
     @Json(name = "amount_minor") val amountMinor: Long,
     val currency: String = "INR",

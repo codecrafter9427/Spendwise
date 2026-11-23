@@ -102,9 +102,12 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.moshi)
     implementation(libs.moshi.kotlin)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
 
     ksp(libs.androidx.room.compiler)
     ksp(libs.hilt.android.compiler)
+    ksp(libs.androidx.hilt.compiler)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

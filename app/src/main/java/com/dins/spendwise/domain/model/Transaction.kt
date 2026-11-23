@@ -12,7 +12,8 @@ data class Transaction(
     val createdAt: Long,
     val updatedAt: Long,
     val remoteId: String? = null,
-    val serverVersion: Int = 1
+    val serverVersion: Int = 1,
+    val deletedAt: Long? = null
 )
 
 data class TransactionWithCategory(

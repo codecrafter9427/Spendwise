@@ -2,7 +2,10 @@
 
 sdk.dir=C\:\\Users\\YOU\\AppData\\Local\\Android\\Sdk
 
-# Emulator → host machine. Use your LAN IP for a physical device.
+# Emulator: http://10.0.2.2:8000
+# Physical device (USB): http://127.0.0.1:8000 and run:
+#   adb reverse tcp:8000 tcp:8000
+# Physical device (Wi‑Fi): http://YOUR_PC_LAN_IP:8000 (same Wi‑Fi as phone)
 spendwise.api.baseUrl=http://10.0.2.2:8000
 
 # Same Supabase project as web/backend

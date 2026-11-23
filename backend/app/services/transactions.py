@@ -11,6 +11,8 @@ from app.models.transaction import Transaction
 from app.repositories.category import CategoryRepository
 from app.repositories.transaction import TransactionRepository
 from app.schemas.transaction import TransactionCreate, TransactionUpdate
+from app.services.sync_log import SyncLogService
+from app.services.sync_payloads import transaction_payload
 from app.services.users import UserService
 
 
@@ -20,6 +22,7 @@ class TransactionService:
         self._repo = TransactionRepository(session)
         self._categories = CategoryRepository(session)
         self._users = UserService(session)
+        self._sync = SyncLogService(session)
 
     async def _require_active_category(
         self,
@@ -75,7 +78,7 @@ class TransactionService:
             version=1,
         )
         try:
-            return await self._repo.add(transaction)
+            created = await self._repo.add(transaction)
         except IntegrityError as exc:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -84,6 +87,15 @@ class TransactionService:
                     "message": "Transaction id already exists",
                 },
             ) from exc
+        await self._sync.record(
+            user_id=user_id,
+            entity_type="transaction",
+            entity_id=created.id,
+            operation="upsert",
+            version=created.version,
+            payload=transaction_payload(created),
+        )
+        return created
 
     async def get(self, user_id: UUID, transaction_id: UUID) -> Transaction:
         await self._users.get_or_provision(user_id)
@@ -94,6 +106,14 @@ class TransactionService:
                 detail={"code": "TRANSACTION_NOT_FOUND", "message": "Transaction not found"},
             )
         return transaction
+
+    async def get_including_deleted(
+        self,
+        user_id: UUID,
+        transaction_id: UUID,
+    ) -> Transaction | None:
+        await self._users.get_or_provision(user_id)
+        return await self._repo.get_owned(transaction_id, user_id, include_deleted=True)
 
     async def list_page(
         self,
@@ -163,7 +183,16 @@ class TransactionService:
             else:
                 setattr(transaction, key, value)
         transaction.version += 1
-        return await self._repo.save(transaction)
+        saved = await self._repo.save(transaction)
+        await self._sync.record(
+            user_id=user_id,
+            entity_type="transaction",
+            entity_id=saved.id,
+            operation="upsert",
+            version=saved.version,
+            payload=transaction_payload(saved),
+        )
+        return saved
 
     async def soft_delete(
         self,
@@ -189,4 +218,13 @@ class TransactionService:
             )
         transaction.deleted_at = datetime.now(UTC)
         transaction.version += 1
-        return await self._repo.save(transaction)
+        saved = await self._repo.save(transaction)
+        await self._sync.record(
+            user_id=user_id,
+            entity_type="transaction",
+            entity_id=saved.id,
+            operation="delete",
+            version=saved.version,
+            payload=transaction_payload(saved),
+        )
+        return saved

@@ -3,9 +3,7 @@ package com.dins.spendwise.data.repository
 import com.dins.spendwise.data.local.dao.MonthlyBudgetDao
 import com.dins.spendwise.data.local.entity.MonthlyBudgetEntity
 import com.dins.spendwise.data.mapper.toDomain
-import com.dins.spendwise.data.remote.AuthRepository
-import com.dins.spendwise.data.remote.SpendWiseApi
-import com.dins.spendwise.data.remote.dto.BudgetUpsertDto
+import com.dins.spendwise.data.sync.OutboxWriter
 import com.dins.spendwise.domain.model.MonthlyBudget
 import com.dins.spendwise.domain.repository.BudgetRepository
 import java.time.YearMonth
@@ -18,8 +16,7 @@ import kotlinx.coroutines.flow.map
 @Singleton
 class BudgetRepositoryImpl @Inject constructor(
     private val monthlyBudgetDao: MonthlyBudgetDao,
-    private val authRepository: AuthRepository,
-    private val api: SpendWiseApi
+    private val outboxWriter: OutboxWriter
 ) : BudgetRepository {
 
     override fun observeBudget(yearMonth: YearMonth): Flow<MonthlyBudget?> =
@@ -56,24 +53,16 @@ class BudgetRepositoryImpl @Inject constructor(
                     ?: error("Budget update failed")
             }
 
-            if (authRepository.validAccessToken() != null) {
-                val response = api.upsertBudget(
-                    year = local.year,
-                    month = local.month,
-                    body = BudgetUpsertDto(
-                        amountMinor = local.amountMinor,
-                        expectedVersion = local.remoteId?.let { local.serverVersion }
-                    )
+            val remoteId = local.remoteId ?: return@runCatching
+            outboxWriter.enqueueBudgetUpsert(
+                remoteId = remoteId,
+                baseVersion = existing?.serverVersion,
+                payload = mapOf(
+                    "year" to local.year,
+                    "month" to local.month,
+                    "amount_minor" to local.amountMinor,
+                    "currency" to "INR"
                 )
-                monthlyBudgetDao.update(
-                    local.copy(
-                        remoteId = response.id,
-                        serverVersion = response.version,
-                        amountMinor = response.amountMinor,
-                        updatedAt = System.currentTimeMillis()
-                    )
-                )
-            }
-            Unit
+            )
         }
 }

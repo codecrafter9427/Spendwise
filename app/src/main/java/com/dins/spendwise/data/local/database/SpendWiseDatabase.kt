@@ -6,9 +6,11 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.dins.spendwise.core.utils.DefaultCategoryRemoteIds
 import com.dins.spendwise.data.local.dao.CategoryDao
 import com.dins.spendwise.data.local.dao.MonthlyBudgetDao
+import com.dins.spendwise.data.local.dao.OutboxDao
 import com.dins.spendwise.data.local.dao.TransactionDao
 import com.dins.spendwise.data.local.entity.CategoryEntity
 import com.dins.spendwise.data.local.entity.MonthlyBudgetEntity
+import com.dins.spendwise.data.local.entity.OutboxEntity
 import com.dins.spendwise.data.local.entity.TransactionEntity
 import com.dins.spendwise.domain.model.TransactionType
 import kotlinx.coroutines.CoroutineScope
@@ -19,15 +21,17 @@ import kotlinx.coroutines.launch
     entities = [
         CategoryEntity::class,
         TransactionEntity::class,
-        MonthlyBudgetEntity::class
+        MonthlyBudgetEntity::class,
+        OutboxEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class SpendWiseDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun transactionDao(): TransactionDao
     abstract fun monthlyBudgetDao(): MonthlyBudgetDao
+    abstract fun outboxDao(): OutboxDao
 
     companion object {
         const val NAME = "spendwise.db"

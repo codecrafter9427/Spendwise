@@ -16,6 +16,9 @@ interface MonthlyBudgetDao {
     @Query("SELECT * FROM monthly_budgets WHERE year = :year AND month = :month LIMIT 1")
     suspend fun getByYearMonth(year: Int, month: Int): MonthlyBudgetEntity?
 
+    @Query("SELECT * FROM monthly_budgets WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun getByRemoteId(remoteId: String): MonthlyBudgetEntity?
+
     @Query("SELECT * FROM monthly_budgets ORDER BY year DESC, month DESC")
     suspend fun getAll(): List<MonthlyBudgetEntity>
 

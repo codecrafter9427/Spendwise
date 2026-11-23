@@ -30,7 +30,8 @@ fun TransactionEntity.toDomain(): Transaction = Transaction(
     createdAt = createdAt,
     updatedAt = updatedAt,
     remoteId = remoteId,
-    serverVersion = serverVersion
+    serverVersion = serverVersion,
+    deletedAt = deletedAt
 )
 
 fun Transaction.toEntity(): TransactionEntity = TransactionEntity(
@@ -43,7 +44,8 @@ fun Transaction.toEntity(): TransactionEntity = TransactionEntity(
     createdAt = createdAt,
     updatedAt = updatedAt,
     remoteId = remoteId,
-    serverVersion = serverVersion
+    serverVersion = serverVersion,
+    deletedAt = deletedAt
 )
 
 fun TransactionWithCategoryEntity.toDomain(): TransactionWithCategory =

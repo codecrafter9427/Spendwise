@@ -7,6 +7,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import com.dins.spendwise.data.local.dao.CategoryDao
 import com.dins.spendwise.data.local.dao.MonthlyBudgetDao
+import com.dins.spendwise.data.local.dao.OutboxDao
 import com.dins.spendwise.data.local.dao.TransactionDao
 import com.dins.spendwise.data.local.database.Migrations
 import com.dins.spendwise.data.local.database.SpendWiseDatabase
@@ -52,7 +53,7 @@ object DatabaseModule {
             SpendWiseDatabase::class.java,
             SpendWiseDatabase.NAME
         )
-            .addMigrations(Migrations.MIGRATION_1_2)
+            .addMigrations(Migrations.MIGRATION_1_2, Migrations.MIGRATION_2_3)
             .fallbackToDestructiveMigration(dropAllTables = true)
             .addCallback(SpendWiseDatabase.createCallback(scope) { database })
             .build()
@@ -67,6 +68,9 @@ object DatabaseModule {
 
     @Provides
     fun provideMonthlyBudgetDao(db: SpendWiseDatabase): MonthlyBudgetDao = db.monthlyBudgetDao()
+
+    @Provides
+    fun provideOutboxDao(db: SpendWiseDatabase): OutboxDao = db.outboxDao()
 
     @Provides
     @Singleton

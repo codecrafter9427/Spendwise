@@ -3,10 +3,14 @@ package com.dins.spendwise.feature.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dins.spendwise.BuildConfig
+import com.dins.spendwise.data.local.dao.OutboxDao
+import com.dins.spendwise.data.local.entity.OutboxEntity
 import com.dins.spendwise.data.remote.AccountImportService
 import com.dins.spendwise.data.remote.AuthRepository
 import com.dins.spendwise.data.remote.AuthSession
 import com.dins.spendwise.data.remote.ImportResult
+import com.dins.spendwise.data.sync.SyncEngine
+import com.dins.spendwise.data.sync.SyncScheduler
 import com.dins.spendwise.domain.model.ThemePreference
 import com.dins.spendwise.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,6 +32,9 @@ data class SettingsUiState(
     val passwordInput: String = "",
     val authBusy: Boolean = false,
     val importBusy: Boolean = false,
+    val syncBusy: Boolean = false,
+    val pendingOutbox: Int = 0,
+    val conflictOutbox: Int = 0,
     val message: String? = null,
     val errorMessage: String? = null
 )
@@ -36,7 +43,10 @@ data class SettingsUiState(
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val authRepository: AuthRepository,
-    private val importService: AccountImportService
+    private val importService: AccountImportService,
+    private val syncEngine: SyncEngine,
+    private val syncScheduler: SyncScheduler,
+    private val outboxDao: OutboxDao
 ) : ViewModel() {
 
     private val formState = MutableStateFlow(SettingsUiState(authConfigured = authRepository.isConfigured()))
@@ -44,13 +54,17 @@ class SettingsViewModel @Inject constructor(
     val uiState: StateFlow<SettingsUiState> = combine(
         settingsRepository.observeThemePreference(),
         authRepository.sessionFlow,
+        outboxDao.observeCountByStatus(OutboxEntity.STATUS_PENDING),
+        outboxDao.observeCountByStatus(OutboxEntity.STATUS_CONFLICT),
         formState
-    ) { theme, session, form ->
+    ) { theme, session, pending, conflicts, form ->
         form.copy(
             themePreference = theme,
             appVersion = BuildConfig.VERSION_NAME,
             authConfigured = authRepository.isConfigured(),
-            session = session
+            session = session,
+            pendingOutbox = pending,
+            conflictOutbox = conflicts
         )
     }.stateIn(
         scope = viewModelScope,
@@ -151,6 +165,31 @@ class SettingsViewModel @Inject constructor(
                         state.copy(
                             importBusy = false,
                             errorMessage = error.message ?: "Import failed"
+                        )
+                    }
+                )
+            }
+            syncScheduler.enqueueSync()
+        }
+    }
+
+    fun syncNow() {
+        viewModelScope.launch {
+            formState.update { it.copy(syncBusy = true, errorMessage = null, message = null) }
+            val result = runCatching { syncEngine.syncOnce() }
+            formState.update { state ->
+                result.fold(
+                    onSuccess = { summary ->
+                        state.copy(
+                            syncBusy = false,
+                            message = "Sync done. Pushed=${summary.pushed}, pulled=${summary.pulled}, " +
+                                "conflicts=${summary.conflicts}, rejected=${summary.rejected}."
+                        )
+                    },
+                    onFailure = { error ->
+                        state.copy(
+                            syncBusy = false,
+                            errorMessage = error.message ?: "Sync failed"
                         )
                     }
                 )

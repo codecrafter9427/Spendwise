@@ -49,6 +49,7 @@ fun SettingsRoute(
         onSignUp = viewModel::signUp,
         onSignOut = viewModel::signOut,
         onImport = viewModel::importLocalData,
+        onSyncNow = viewModel::syncNow,
         onClearMessage = viewModel::clearMessage
     )
 }
@@ -63,6 +64,7 @@ fun SettingsScreen(
     onSignUp: () -> Unit,
     onSignOut: () -> Unit,
     onImport: () -> Unit,
+    onSyncNow: () -> Unit,
     onClearMessage: () -> Unit
 ) {
     var showAbout by remember { mutableStateOf(false) }
@@ -143,12 +145,26 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
             )
             Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Pending sync: ${state.pendingOutbox} · Conflicts: ${state.conflictOutbox}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
             Button(
                 onClick = onImport,
-                enabled = !state.importBusy,
+                enabled = !state.importBusy && !state.syncBusy,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(if (state.importBusy) "Uploading…" else "Upload local data to cloud")
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onSyncNow,
+                enabled = !state.syncBusy && !state.importBusy,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (state.syncBusy) "Syncing…" else "Sync now")
             }
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedButton(

@@ -2,6 +2,7 @@ package com.dins.spendwise.di
 
 import com.dins.spendwise.BuildConfig
 import com.dins.spendwise.data.remote.AuthInterceptor
+import com.dins.spendwise.data.remote.MoshiObjectAdapter
 import com.dins.spendwise.data.remote.SpendWiseApi
 import com.dins.spendwise.data.remote.SupabaseAuthApi
 import com.squareup.moshi.Moshi
@@ -25,6 +26,7 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideMoshi(): Moshi = Moshi.Builder()
+        .add(MoshiObjectAdapter())
         .add(KotlinJsonAdapterFactory())
         .build()
 

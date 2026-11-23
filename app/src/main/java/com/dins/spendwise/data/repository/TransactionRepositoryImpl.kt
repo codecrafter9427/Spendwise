@@ -5,10 +5,7 @@ import com.dins.spendwise.data.local.dao.CategoryDao
 import com.dins.spendwise.data.local.dao.TransactionDao
 import com.dins.spendwise.data.mapper.toDomain
 import com.dins.spendwise.data.mapper.toEntity
-import com.dins.spendwise.data.remote.AuthRepository
-import com.dins.spendwise.data.remote.SpendWiseApi
-import com.dins.spendwise.data.remote.dto.TransactionCreateDto
-import com.dins.spendwise.data.remote.dto.TransactionUpdateDto
+import com.dins.spendwise.data.sync.OutboxWriter
 import com.dins.spendwise.domain.model.Transaction
 import com.dins.spendwise.domain.model.TransactionType
 import com.dins.spendwise.domain.model.TransactionWithCategory
@@ -24,8 +21,7 @@ import kotlinx.coroutines.flow.map
 class TransactionRepositoryImpl @Inject constructor(
     private val transactionDao: TransactionDao,
     private val categoryDao: CategoryDao,
-    private val authRepository: AuthRepository,
-    private val api: SpendWiseApi
+    private val outboxWriter: OutboxWriter
 ) : TransactionRepository {
 
     override fun observeAllWithCategory(): Flow<List<TransactionWithCategory>> =
@@ -63,9 +59,9 @@ class TransactionRepositoryImpl @Inject constructor(
     override suspend fun add(transaction: Transaction): Result<Long> = runCatching {
         val remoteId = transaction.remoteId ?: UUID.randomUUID().toString()
         val localId = transactionDao.insert(
-            transaction.copy(remoteId = remoteId, serverVersion = 1).toEntity()
+            transaction.copy(remoteId = remoteId, serverVersion = 1, deletedAt = null).toEntity()
         )
-        pushCreateIfSignedIn(localId, remoteId)
+        enqueueUpsert(localId)
         localId
     }
 
@@ -73,60 +69,47 @@ class TransactionRepositoryImpl @Inject constructor(
         val existing = transactionDao.getById(transaction.id) ?: error("Transaction not found")
         val remoteId = transaction.remoteId ?: existing.remoteId ?: UUID.randomUUID().toString()
         val rows = transactionDao.update(
-            transaction.copy(remoteId = remoteId).toEntity()
+            transaction.copy(remoteId = remoteId, deletedAt = existing.deletedAt).toEntity()
         )
         if (rows == 0) error("Transaction not found")
-        pushUpdateIfSignedIn(transaction.id)
+        enqueueUpsert(transaction.id)
     }
 
     override suspend fun delete(id: Long): Result<Unit> = runCatching {
         val entity = transactionDao.getById(id) ?: error("Transaction not found")
-        if (authRepository.validAccessToken() != null && !entity.remoteId.isNullOrBlank()) {
-            runCatching {
-                api.deleteTransaction(entity.remoteId, entity.serverVersion)
-            }
-        }
-        val rows = transactionDao.delete(entity)
-        if (rows == 0) error("Failed to delete transaction")
-    }
-
-    private suspend fun pushCreateIfSignedIn(localId: Long, remoteId: String) {
-        if (authRepository.validAccessToken() == null) return
-        val entity = transactionDao.getById(localId) ?: return
-        val categoryRemote = categoryDao.getById(entity.categoryId)?.remoteId ?: return
-        val response = api.createTransaction(
-            TransactionCreateDto(
-                id = remoteId,
-                type = entity.type.lowercase(),
-                amountMinor = entity.amountMinor,
-                categoryId = categoryRemote,
-                description = entity.description,
-                transactionDate = java.time.LocalDate.ofEpochDay(entity.transactionDate).toString()
+        val remoteId = entity.remoteId ?: UUID.randomUUID().toString()
+        val now = System.currentTimeMillis()
+        val rows = transactionDao.update(
+            entity.copy(
+                remoteId = remoteId,
+                deletedAt = now,
+                updatedAt = now
             )
         )
-        transactionDao.update(
-            entity.copy(remoteId = response.id, serverVersion = response.version)
+        if (rows == 0) error("Failed to delete transaction")
+        outboxWriter.enqueueTransactionDelete(
+            remoteId = remoteId,
+            baseVersion = entity.serverVersion
         )
     }
 
-    private suspend fun pushUpdateIfSignedIn(localId: Long) {
-        if (authRepository.validAccessToken() == null) return
+    private suspend fun enqueueUpsert(localId: Long) {
         val entity = transactionDao.getById(localId) ?: return
         val remoteId = entity.remoteId ?: return
         val categoryRemote = categoryDao.getById(entity.categoryId)?.remoteId ?: return
-        val response = api.updateTransaction(
-            remoteId,
-            TransactionUpdateDto(
-                expectedVersion = entity.serverVersion,
-                type = entity.type.lowercase(),
-                amountMinor = entity.amountMinor,
-                categoryId = categoryRemote,
-                description = entity.description,
-                transactionDate = java.time.LocalDate.ofEpochDay(entity.transactionDate).toString()
+        // New local rows start at serverVersion=1 before first ack; omit base until synced once.
+        val baseVersion = entity.serverVersion.takeIf { entity.updatedAt > entity.createdAt || entity.serverVersion > 1 }
+        outboxWriter.enqueueTransactionUpsert(
+            remoteId = remoteId,
+            baseVersion = baseVersion,
+            payload = mapOf(
+                "type" to entity.type.lowercase(),
+                "amount_minor" to entity.amountMinor,
+                "currency" to "INR",
+                "category_id" to categoryRemote,
+                "description" to entity.description,
+                "transaction_date" to java.time.LocalDate.ofEpochDay(entity.transactionDate).toString()
             )
-        )
-        transactionDao.update(
-            entity.copy(remoteId = response.id, serverVersion = response.version)
         )
     }
 }

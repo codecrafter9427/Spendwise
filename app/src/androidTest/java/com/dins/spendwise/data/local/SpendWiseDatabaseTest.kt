@@ -74,8 +74,10 @@ class SpendWiseDatabaseTest {
         val updated = transactionDao.getById(id)
         assertEquals("Dinner", updated?.description)
 
-        transactionDao.delete(updated!!)
-        assertNull(transactionDao.getById(id))
+        val now = System.currentTimeMillis()
+        transactionDao.update(updated!!.copy(deletedAt = now, updatedAt = now))
+        assertEquals(0, transactionDao.observeByMonthWithCategory(date, date).first().size)
+        assertNotNull(transactionDao.getById(id)?.deletedAt)
     }
 
     @Test

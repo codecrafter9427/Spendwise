@@ -1,7 +1,6 @@
 package com.dins.spendwise.data.local.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
@@ -16,6 +15,7 @@ interface TransactionDao {
     @Query(
         """
         SELECT * FROM transactions
+        WHERE deletedAt IS NULL
         ORDER BY transactionDate DESC, createdAt DESC
         """
     )
@@ -25,7 +25,8 @@ interface TransactionDao {
     @Query(
         """
         SELECT * FROM transactions
-        WHERE transactionDate BETWEEN :startEpochDay AND :endEpochDay
+        WHERE deletedAt IS NULL
+          AND transactionDate BETWEEN :startEpochDay AND :endEpochDay
         ORDER BY transactionDate DESC, createdAt DESC
         """
     )
@@ -38,7 +39,8 @@ interface TransactionDao {
     @Query(
         """
         SELECT * FROM transactions
-        WHERE transactionDate BETWEEN :startEpochDay AND :endEpochDay
+        WHERE deletedAt IS NULL
+          AND transactionDate BETWEEN :startEpochDay AND :endEpochDay
         ORDER BY transactionDate DESC, createdAt DESC
         LIMIT :limit
         """
@@ -50,13 +52,14 @@ interface TransactionDao {
     ): Flow<List<TransactionWithCategoryEntity>>
 
     @Transaction
-    @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
+    @Query("SELECT * FROM transactions WHERE id = :id AND deletedAt IS NULL LIMIT 1")
     fun observeByIdWithCategory(id: Long): Flow<TransactionWithCategoryEntity?>
 
     @Query(
         """
         SELECT COALESCE(SUM(amountMinor), 0) FROM transactions
-        WHERE type = :type
+        WHERE deletedAt IS NULL
+          AND type = :type
           AND transactionDate BETWEEN :startEpochDay AND :endEpochDay
         """
     )
@@ -72,12 +75,21 @@ interface TransactionDao {
     @Update
     suspend fun update(entity: TransactionEntity): Int
 
-    @Delete
-    suspend fun delete(entity: TransactionEntity): Int
-
     @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): TransactionEntity?
 
-    @Query("SELECT * FROM transactions ORDER BY transactionDate DESC, createdAt DESC")
+    @Query("SELECT * FROM transactions WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun getByRemoteId(remoteId: String): TransactionEntity?
+
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE deletedAt IS NULL
+        ORDER BY transactionDate DESC, createdAt DESC
+        """
+    )
+    suspend fun getAllActive(): List<TransactionEntity>
+
+    @Query("SELECT * FROM transactions WHERE deletedAt IS NULL ORDER BY transactionDate DESC, createdAt DESC")
     suspend fun getAll(): List<TransactionEntity>
 }
