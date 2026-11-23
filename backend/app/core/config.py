@@ -31,6 +31,15 @@ class Settings(BaseSettings):
     # HS256 secret for APP_ENV=test only. Never configure in production.
     jwt_test_secret: str | None = Field(default=None, alias="JWT_TEST_SECRET")
 
+    # Optional OpenAI-compatible provider. Without a key, AI uses deterministic tools only.
+    ai_feature_enabled: bool = Field(default=True, alias="AI_FEATURE_ENABLED")
+    ai_provider_api_key: str | None = Field(default=None, alias="AI_PROVIDER_API_KEY")
+    ai_provider_base_url: str = Field(
+        default="https://api.openai.com/v1",
+        alias="AI_PROVIDER_BASE_URL",
+    )
+    ai_model: str = Field(default="gpt-4o-mini", alias="AI_MODEL")
+
     @field_validator("cors_origins_raw", mode="before")
     @classmethod
     def coerce_cors_origins_raw(cls, value: object) -> str:

@@ -5,8 +5,21 @@ export type UserProfile = {
   display_name: string | null;
   base_currency: string;
   timezone: string;
+  ai_enabled: boolean;
   created_at: string;
   updated_at: string;
+};
+
+export type AiChatResponse = {
+  answer: string;
+  mode: "deterministic" | "llm";
+  period: { year: number; month: number };
+  tools_used: Array<{
+    name: string;
+    arguments: Record<string, unknown>;
+    result: Record<string, unknown>;
+  }>;
+  disclaimer: string;
 };
 
 export type Category = {

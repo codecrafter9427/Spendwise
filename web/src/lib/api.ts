@@ -1,4 +1,5 @@
 import type {
+  AiChatResponse,
   AnalyticsSummary,
   Budget,
   Category,
@@ -66,8 +67,14 @@ export const api = {
       display_name?: string | null;
       timezone?: string;
       base_currency?: string;
+      ai_enabled?: boolean;
     },
   ) => apiRequest<UserProfile>("/api/v1/me", { method: "PATCH", token, body }),
+
+  aiChat: (
+    token: string,
+    body: { message: string; year?: number; month?: number },
+  ) => apiRequest<AiChatResponse>("/api/v1/ai/chat", { method: "POST", token, body }),
 
   listCategories: (token: string, type?: TransactionType) =>
     apiRequest<Category[]>("/api/v1/categories", {

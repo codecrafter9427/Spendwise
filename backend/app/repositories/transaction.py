@@ -164,6 +164,31 @@ class TransactionRepository:
         result = await self._session.execute(stmt)
         return [(row[0], int(row[1])) for row in result.all()]
 
+    async def largest_expenses(
+        self,
+        user_id: UUID,
+        *,
+        start_date: date,
+        end_date: date,
+        limit: int = 5,
+        currency: str = "INR",
+    ) -> list[Transaction]:
+        stmt = (
+            select(Transaction)
+            .where(
+                Transaction.user_id == user_id,
+                Transaction.deleted_at.is_(None),
+                Transaction.transaction_date >= start_date,
+                Transaction.transaction_date <= end_date,
+                Transaction.type == "expense",
+                Transaction.currency == currency,
+            )
+            .order_by(Transaction.amount_minor.desc(), Transaction.transaction_date.desc())
+            .limit(limit)
+        )
+        result = await self._session.execute(stmt)
+        return list(result.scalars().all())
+
 
 def _encode_cursor(transaction_date: date, created_at: datetime, entity_id: UUID) -> str:
     payload = {

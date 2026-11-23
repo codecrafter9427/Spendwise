@@ -14,6 +14,7 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [timezone, setTimezone] = useState("UTC");
+  const [aiEnabled, setAiEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +33,7 @@ export default function SettingsPage() {
         setProfile(me);
         setDisplayName(me.display_name ?? "");
         setTimezone(me.timezone || "UTC");
+        setAiEnabled(Boolean(me.ai_enabled));
       } catch (err) {
         setError(err instanceof ApiError || err instanceof Error ? err.message : "Failed to load");
       } finally {
@@ -55,8 +57,10 @@ export default function SettingsPage() {
         display_name: displayName.trim() || null,
         timezone,
         base_currency: "INR",
+        ai_enabled: aiEnabled,
       });
       setProfile(updated);
+      setAiEnabled(Boolean(updated.ai_enabled));
       setMessage("Profile saved.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save profile");
@@ -117,6 +121,14 @@ export default function SettingsPage() {
               <label>Base currency</label>
               <input value="INR" readOnly />
             </div>
+            <label className="row" style={{ gap: "0.5rem", alignItems: "center" }}>
+              <input
+                type="checkbox"
+                checked={aiEnabled}
+                onChange={(e) => setAiEnabled(e.target.checked)}
+              />
+              Enable AI assistant (read-only; uses your finance records)
+            </label>
             <button className="btn" type="submit" disabled={saving}>
               {saving ? "Saving…" : "Save profile"}
             </button>
@@ -128,8 +140,9 @@ export default function SettingsPage() {
         <strong>Privacy</strong>
         <p style={{ margin: 0, color: "var(--muted)" }}>
           SpendWise web talks only to the SpendWise API with your Supabase access token. Financial
-          data is not queried directly from the browser database. Export and account deletion land
-          in a later hardening stage.
+          data is not queried directly from the browser database. The AI assistant cannot create,
+          edit, or delete records and will not give investment or tax advice. Export and account
+          deletion land in a later hardening stage.
         </p>
       </div>
     </div>
