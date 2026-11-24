@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     @field_validator("database_url", mode="before")
     @classmethod
     def normalize_database_url(cls, value: object) -> object:
-        """Accept plain postgres URLs from Supabase Connect; force asyncpg."""
+        """Accept Supabase Connect URIs; force asyncpg and strip Prisma-only params."""
         if not isinstance(value, str) or not value:
             return value
         url = value.strip()
@@ -65,6 +65,28 @@ class Settings(BaseSettings):
             if url.startswith(prefix):
                 url = "postgresql+asyncpg://" + url[len(prefix) :]
                 break
+
+        # Prisma's pgbouncer=true is not valid for asyncpg/SQLAlchemy.
+        if "?" in url:
+            base, query = url.split("?", 1)
+            kept: list[str] = []
+            has_ssl = False
+            for part in query.split("&"):
+                if not part:
+                    continue
+                key = part.split("=", 1)[0].lower()
+                if key in {"pgbouncer", "connection_limit", "pool_timeout"}:
+                    continue
+                if key in {"ssl", "sslmode"}:
+                    has_ssl = True
+                kept.append(part)
+            if not has_ssl and (
+                "supabase.com" in base or "pooler.supabase.com" in base
+            ):
+                kept.append("ssl=require")
+            url = base + (("?" + "&".join(kept)) if kept else "")
+        elif "supabase.com" in url:
+            url = url + "?ssl=require"
         return url
 
     @field_validator("cors_origins_raw", mode="before")
